@@ -8,15 +8,6 @@ import (
 	"strings"
 )
 
-// LoadAPIKey looks in, in order:
-//  1. $OPENCODE_API_KEY               (explicit override)
-//  2. $OPENCODE_KEY_FILE              (explicit file override)
-//  3. opencode's own auth store       (single source of truth — auto-syncs with opencode)
-//  4. opencode-key.txt next to the exe (portable fallback for sharing)
-//  5. ~/.claude-code-router/opencode-key.txt
-//
-// returns "" if none found (handlers then return a clear error rather than the
-// process dying silently).
 func readKeyFile(p string) string {
 	if len(p) == 0 {
 		return ""
@@ -29,38 +20,44 @@ func readKeyFile(p string) string {
 	return ""
 }
 
-func LoadAPIKey() string {
-	if k := strings.TrimSpace(os.Getenv("OPENCODE_API_KEY")); k != "" {
-		return k
-	}
+// takes in the env var map and returns the loaded keys, not present if not found
+func loadEnvKeys(providerEnvVars map[string]string) map[string]string {
+	out := map[string]string{}
 
-	if k := readKeyFile(os.Getenv("OPENCODE_KEY_FILE")); k != "" {
-		return k
-	}
-
-	if k := keyFromOpencodeAuth(); k != "" {
-		return k
-	}
-
-	if exe, err := os.Executable(); err == nil {
-		if k := readKeyFile(filepath.Join(filepath.Dir(exe), "opencode-key.txt")); k != "" {
-			return k
+	for keyName, envVar := range providerEnvVars {
+		if token := strings.TrimSpace(os.Getenv(envVar)); token != "" {
+			out[keyName] = token
 		}
 	}
 
-	if home, err := os.UserHomeDir(); err == nil {
-		if k := readKeyFile(filepath.Join(home, ".claude-code-router", "opencode-key.txt")); k != "" {
-			return k
-		}
+	if k := readKeyFile(os.Getenv("OPENCODE_KEY_FILE")); out["opencode-go"] == "" && k != "" {
+		out["opencode-go"] = k
 	}
 
-	return ""
+	return out
 }
 
-// keyFromOpencodeAuth reads the api key opencode itself stores in auth.json,
+func LoadAPIKeys(providerEnvVars map[string]string) map[string]string {
+	// load from the opencode location
+	// lets make it one of the options to have keys there
+	keys := loadAuthFromFile()
+
+	// now look at the env vars in the yaml file
+	envKeys := loadEnvKeys(providerEnvVars)
+
+	for k, v := range envKeys {
+		if _, ok := keys[k]; !ok {
+			keys[k] = v
+		}
+	}
+
+	return keys
+}
+
+// loadAuthFromFile reads the api key opencode itself stores in auth.json,
 // shaped as { "<provider>": { "type":"api", "key":"..." }, ... }.
 // Prefers the "opencode-go" provider, then "opencode".
-func keyFromOpencodeAuth() string {
+func loadAuthFromFile() map[string]string {
 	var paths []string
 
 	p := os.Getenv("OPENCODE_AUTH_FILE")
@@ -86,6 +83,7 @@ func keyFromOpencodeAuth() string {
 			paths = append(paths, p)
 		}
 	}
+
 	for _, p := range paths {
 		b, err := os.ReadFile(p)
 		if err != nil {
@@ -100,12 +98,13 @@ func keyFromOpencodeAuth() string {
 			continue
 		}
 
-		for _, name := range []string{"opencode-go", "opencode"} {
-			if k := strings.TrimSpace(m[name].Key); k != "" {
-				return k
-			}
+		keys := map[string]string{}
+		for name, k := range m {
+			keys[name] = k.Key
 		}
+
+		return keys
 	}
 
-	return ""
+	return nil
 }

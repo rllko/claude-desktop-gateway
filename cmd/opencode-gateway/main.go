@@ -6,23 +6,55 @@
 package main
 
 import (
+	"log"
 	"log/slog"
+	"maps"
 	"net/http"
 	"os"
 
 	"opencode-gateway/internal/gateway"
+
+	"github.com/stretchr/testify/assert/yaml"
 )
 
 func main() {
 	cfg := gateway.DefaultConfig()
-	key := gateway.LoadAPIKey()
-	srv := gateway.New(cfg, key)
-	defer srv.Close()
-	if key == "" {
+
+	yamlFile, err := os.ReadFile("models.yaml")
+	if err != nil {
+		log.Fatalf("failed to read: %v", err)
+	}
+
+	var pConfig gateway.YamlConfig
+	yaml.Unmarshal(yamlFile, &pConfig)
+
+	p := make(map[string]string)
+	providers := make([]gateway.ProviderConfig, 0)
+	for name, config := range pConfig.Providers {
+		if config.Enabled {
+			p[name] = config.ApiKey
+			providers = append(providers, config)
+		}
+	}
+
+	// get the keys, this way we can filter
+	// name -> key ; example: openai -> KEY
+	processedKeys := gateway.LoadAPIKeys(p)
+
+	if pConfig.ExtraApiKeys != nil {
+		maps.Copy(processedKeys, pConfig.ExtraApiKeys)
+	}
+
+	if len(processedKeys) == 0 {
 		slog.Warn("no API key found — requests will 401 until one is set")
 	}
+
+	srv := gateway.New(cfg, processedKeys, providers)
+	defer srv.Close()
+
 	slog.Info("opencode-gateway starting",
 		"addr", cfg.Addr, "models", srv.ModelCount())
+
 	if err := http.ListenAndServe(cfg.Addr, srv.Handler()); err != nil {
 		slog.Error("server stopped", "err", err)
 		os.Exit(1)

@@ -348,7 +348,6 @@ func buildMessageResponse(o oaiResp, real string) map[string]any {
 		if json.Unmarshal([]byte(tc.Function.Arguments), &input) != nil || input == nil {
 			input = map[string]any{}
 		}
-
 		content = append(content, map[string]any{
 			"type": "tool_use", "id": tc.ID, "name": tc.Function.Name, "input": input,
 		})

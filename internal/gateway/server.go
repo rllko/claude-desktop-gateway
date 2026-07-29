@@ -24,29 +24,48 @@ import (
 )
 
 type Server struct {
-	cfg     Config
-	apiKey  string
-	client  *http.Client
-	models  []Model
-	byAlias map[string]Model // Desktop alias -> model (real name + upstream API)
-	log     *slog.Logger     // nil unless GATEWAY_LOG is set
-	logC    io.Closer        // underlying log file; nil unless GATEWAY_LOG is set
+	cfg       Config
+	apiKeys   map[string]string
+	client    *http.Client
+	models    []ModelConfig
+	providers []ProviderConfig
+	byAlias   map[string]ModelConfig // Desktop alias -> model (real name + upstream API)
+	log       *slog.Logger           // nil unless GATEWAY_LOG is set
+	logC      io.Closer              // underlying log file; nil unless GATEWAY_LOG is set
 }
 
-func New(cfg Config, apiKey string) *Server {
+func filterProviders(providers []ProviderConfig, apiKeys map[string]string) []ProviderConfig {
+	out := make([]ProviderConfig, 0)
+
+	for _, provider := range providers {
+		if key, v := apiKeys[provider.APIType]; v {
+			// just in case
+			if provider.ApiKey == "" {
+				provider.ApiKey = key
+			}
+
+			out = append(out, provider)
+		}
+	}
+
+	return out
+}
+
+func New(cfg Config, apiKeys map[string]string, providers []ProviderConfig) *Server {
 	byAlias := make(map[string]Model, len(models))
-	for _, m := range models {
+	for _, m := range providers {
 		byAlias[m.Alias] = m
 	}
 	lg, lc := openLogger(cfg.LogSpec)
 	return &Server{
-		cfg:     cfg,
-		apiKey:  apiKey,
-		client:  &http.Client{Timeout: cfg.HTTPTimeout},
-		models:  models,
-		byAlias: byAlias,
-		log:     lg,
-		logC:    lc,
+		cfg:       cfg,
+		apiKeys:   apiKeys,
+		client:    &http.Client{Timeout: cfg.HTTPTimeout},
+		models:    models,
+		providers: providers,
+		byAlias:   byAlias,
+		log:       lg,
+		logC:      lc,
 	}
 }
 
@@ -65,7 +84,7 @@ func (s *Server) Handler() http.Handler {
 	return mux
 }
 
-func (s *Server) HasKey() bool { return s.apiKey != "" }
+func (s *Server) HasKey(provider ProviderConfig) bool { return provider.ApiKey != "" }
 
 func (s *Server) ModelCount() int { return len(s.models) }
 
@@ -148,7 +167,7 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 				"type":             "model",
 				"id":               m.Alias,
 				"display_name":     m.Label,
-				"created_at":       createdAt,
+				"created_at":       time.Now().UTC(),
 				"max_input_tokens": m.MaxIn,
 				"max_tokens":       m.MaxOut,
 				"capabilities": map[string]any{
@@ -217,11 +236,15 @@ func (s *Server) handleMessages(w http.ResponseWriter, r *http.Request) {
 	real, oreq := s.toOpenAI(a)
 
 	var route string
-	up := s.byAlias[a.Model].API
+
+	up := s.byAlias[a.Model]
 
 	switch up {
 	case zenAPI:
 		route = "zen"
+	case AgentRouterAPI:
+		route = "agentrouter"
+		up = AgentRouterAPI
 	default:
 		up = goAPI
 		route = "go"

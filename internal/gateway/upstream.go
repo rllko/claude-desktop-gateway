@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (s *Server) callUpstream(url string, body oaiReq) (*http.Response, error) {
+func (s *Server) callUpstream(url string, body oaiReq, provider ProviderConfig) (*http.Response, error) {
 	b, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -17,7 +17,7 @@ func (s *Server) callUpstream(url string, body oaiReq) (*http.Response, error) {
 		return nil, err
 	}
 
-	req.Header.Set("authorization", "Bearer "+s.apiKey)
+	req.Header.Set("authorization", "Bearer "+provider.ApiKey)
 	req.Header.Set("content-type", "application/json")
 	req.Header.Set("accept", "application/json")
 
