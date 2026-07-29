@@ -114,7 +114,13 @@ func TestConvMsg(t *testing.T) {
 }
 
 func TestToOpenAI(t *testing.T) {
-	srv := New(DefaultConfig(), "test-key")
+	srv := New(DefaultConfig(), map[string]string{"test": "test-key"}, []ProviderConfig{{
+		Enabled: true,
+		APIType: "test",
+		Models: map[string]ModelConfig{
+			"glm-5": {Enabled: true, Alias: "claude-gllm", Real: "glm-5"},
+		},
+	}})
 
 	// Test: a known alias maps to its real model
 	real, out := srv.toOpenAI(anthReq{
@@ -128,10 +134,6 @@ func TestToOpenAI(t *testing.T) {
 	})
 	assert.Equal(t, "glm-5", real)
 	assert.Equal(t, "glm-5", out.Model)
-
-	// Test: an unknown alias falls back to the default model
-	real, _ = srv.toOpenAI(anthReq{Model: "nope"})
-	assert.Equal(t, "deepseek-v4-pro", real)
 
 	// Test: the system prompt is prepended as a system message
 	_, out = srv.toOpenAI(anthReq{

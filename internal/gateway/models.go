@@ -11,11 +11,12 @@ type YamlConfig struct {
 
 // the Provider level (zenapi, agent-router, etc.)
 type ProviderConfig struct {
-	Enabled bool                   `yaml:"enabled"`
-	APIType string                 `yaml:"api_type,omitempty"`
-	ApiKey  string                 `yaml:"env_var,omitempty"`
-	BaseURL string                 `yaml:"base_url"`
-	Models  map[string]ModelConfig `yaml:"models"`
+	Enabled   bool                   `yaml:"enabled"`
+	APIType   string                 `yaml:"api_type,omitempty"`
+	APIKey    string                 `yaml:"env_var,omitempty"`
+	BaseURL   string                 `yaml:"base_url"`
+	UserAgent string                 `yaml:"user_agent"`
+	Models    map[string]ModelConfig `yaml:"models"`
 }
 
 // / the Model level (big-pickle, kimi-k3, etc.)
@@ -23,6 +24,7 @@ type ModelConfig struct {
 	Enabled bool   `yaml:"enabled"`
 	Label   string `yaml:"label"`
 	Alias   string `yaml:"alias"`
+	Real    string `yaml:"real"`
 	MaxIn   int    `yaml:"max_in"`
 	MaxOut  int    `yaml:"max_out"`
 	Vision  bool   `yaml:"vision"`

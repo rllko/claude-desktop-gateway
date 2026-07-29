@@ -8,12 +8,16 @@ package main
 import (
 	"context"
 	_ "embed"
+	"log"
 	"log/slog"
+	"maps"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
 	"fyne.io/systray"
+	"github.com/stretchr/testify/assert/yaml"
 
 	"opencode-gateway/internal/gateway"
 )
@@ -56,8 +60,41 @@ func stopServer() {
 
 func main() {
 	cfg = gateway.DefaultConfig()
-	gw = gateway.New(cfg, gateway.LoadAPIKey())
-	systray.Run(onReady, onExit)
+
+	yamlFile, err := os.ReadFile("models.yaml")
+	if err != nil {
+		log.Fatalf("failed to read: %v", err)
+	}
+
+	var pConfig gateway.YamlConfig
+	yaml.Unmarshal(yamlFile, &pConfig)
+
+	p := make(map[string]string)
+	providers := make([]gateway.ProviderConfig, 0)
+	for _, config := range pConfig.Providers {
+		if config.Enabled {
+			if _, ok := p[config.APIType]; !ok {
+				p[config.APIKey] = config.APIType
+			}
+
+			providers = append(providers, config)
+		}
+	}
+
+	// get the keys, this way we can filter
+	// name -> key ; example: openai -> KEY
+	processedKeys := gateway.LoadAPIKeys(p)
+
+	if pConfig.ExtraApiKeys != nil {
+		maps.Copy(processedKeys, pConfig.ExtraApiKeys)
+	}
+
+	if len(processedKeys) == 0 {
+		slog.Warn("no API key found — requests will 401 until one is set")
+	}
+
+	gw = gateway.New(cfg, processedKeys, providers)
+	systray.Run(func() { onReady(len(processedKeys) > 0) }, onExit)
 }
 
 // onExit stops the HTTP server and closes the request log file.
@@ -67,14 +104,14 @@ func onExit() {
 	_ = gw.Close()
 }
 
-func onReady() {
+func onReady(hasKey bool) {
 	systray.SetIcon(iconData)
 	systray.SetTitle("opencode-gateway")
 	systray.SetTooltip("opencode-gateway — running on " + cfg.Addr)
 
 	mStatus := systray.AddMenuItem("Running on "+cfg.Addr, "")
 	mStatus.Disable()
-	if !gw.HasKey() {
+	if !hasKey {
 		mStatus.SetTitle("⚠ No API key (add opencode-key.txt next to the exe)")
 	}
 	systray.AddSeparator()

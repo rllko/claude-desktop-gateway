@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 )
 
@@ -259,7 +260,8 @@ func convMsg(m anthMsg) []oaiMsg {
 }
 
 func (s *Server) toOpenAI(a anthReq) (string, oaiReq) {
-	real := s.byAlias[a.Model].Real
+	real := s.byAlias[a.Model].model.Real
+	fmt.Println(real)
 	if real == "" {
 		real = s.cfg.DefaultModel
 	}

@@ -6,6 +6,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"log/slog"
 	"maps"
@@ -30,9 +31,12 @@ func main() {
 
 	p := make(map[string]string)
 	providers := make([]gateway.ProviderConfig, 0)
-	for name, config := range pConfig.Providers {
+	for _, config := range pConfig.Providers {
 		if config.Enabled {
-			p[name] = config.ApiKey
+			if _, ok := p[config.APIType]; !ok {
+				p[config.APIKey] = config.APIType
+			}
+
 			providers = append(providers, config)
 		}
 	}
@@ -44,7 +48,7 @@ func main() {
 	if pConfig.ExtraApiKeys != nil {
 		maps.Copy(processedKeys, pConfig.ExtraApiKeys)
 	}
-
+	fmt.Println(providers[0].Models["deepseek-v4-flash"].Real)
 	if len(processedKeys) == 0 {
 		slog.Warn("no API key found — requests will 401 until one is set")
 	}

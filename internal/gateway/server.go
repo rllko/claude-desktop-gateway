@@ -25,13 +25,17 @@ import (
 
 type Server struct {
 	cfg       Config
-	apiKeys   map[string]string
 	client    *http.Client
 	models    []ModelConfig
 	providers []ProviderConfig
-	byAlias   map[string]ModelConfig // Desktop alias -> model (real name + upstream API)
-	log       *slog.Logger           // nil unless GATEWAY_LOG is set
-	logC      io.Closer              // underlying log file; nil unless GATEWAY_LOG is set
+	byAlias   map[string]ModelInfo // Desktop alias -> model (real name + upstream API)
+	log       *slog.Logger         // nil unless GATEWAY_LOG is set
+	logC      io.Closer            // underlying log file; nil unless GATEWAY_LOG is set
+}
+
+type ModelInfo struct {
+	model    *ModelConfig
+	provider *ProviderConfig
 }
 
 func filterProviders(providers []ProviderConfig, apiKeys map[string]string) []ProviderConfig {
@@ -40,8 +44,8 @@ func filterProviders(providers []ProviderConfig, apiKeys map[string]string) []Pr
 	for _, provider := range providers {
 		if key, v := apiKeys[provider.APIType]; v {
 			// just in case
-			if provider.ApiKey == "" {
-				provider.ApiKey = key
+			if provider.APIKey == "" {
+				provider.APIKey = key
 			}
 
 			out = append(out, provider)
@@ -52,18 +56,26 @@ func filterProviders(providers []ProviderConfig, apiKeys map[string]string) []Pr
 }
 
 func New(cfg Config, apiKeys map[string]string, providers []ProviderConfig) *Server {
-	byAlias := make(map[string]Model, len(models))
-	for _, m := range providers {
-		byAlias[m.Alias] = m
+	byAlias := make(map[string]ModelInfo)
+	providers = filterProviders(providers, apiKeys)
+	models := make([]ModelConfig, 0)
+
+	for _, p := range providers {
+		for _, m := range p.Models {
+			if m.Enabled {
+				byAlias[m.Alias] = ModelInfo{model: &m, provider: &p}
+				models = append(models, m)
+			}
+		}
 	}
+
 	lg, lc := openLogger(cfg.LogSpec)
 	return &Server{
 		cfg:       cfg,
-		apiKeys:   apiKeys,
 		client:    &http.Client{Timeout: cfg.HTTPTimeout},
-		models:    models,
 		providers: providers,
 		byAlias:   byAlias,
+		models:    models,
 		log:       lg,
 		logC:      lc,
 	}
@@ -84,7 +96,7 @@ func (s *Server) Handler() http.Handler {
 	return mux
 }
 
-func (s *Server) HasKey(provider ProviderConfig) bool { return provider.ApiKey != "" }
+func (s *Server) HasKey(provider ProviderConfig) bool { return len(s.providers) > 0 }
 
 func (s *Server) ModelCount() int { return len(s.models) }
 
@@ -212,48 +224,26 @@ func (s *Server) handleMessages(w http.ResponseWriter, r *http.Request) {
 	var detail string
 	defer func() { s.logf(r, status, start, "%s", detail) }()
 
-	if s.apiKey == "" {
-		status = 401
-		writeJSON(w,
-			status,
-			errObj("no_api_key",
-				"no API key: set OPENCODE_API_KEY or put opencode-key.txt next to the executable"))
-		return
-	}
-
 	var a anthReq
 	if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
 		status = 400
 		detail = "decode=" + err.Error()
 		writeJSON(
 			w,
-			status,
-			errObj("invalid_request", err.Error()),
+			status, errObj("invalid_request", err.Error()),
 		)
 		return
 	}
 
 	real, oreq := s.toOpenAI(a)
 
-	var route string
-
-	up := s.byAlias[a.Model]
-
-	switch up {
-	case zenAPI:
-		route = "zen"
-	case AgentRouterAPI:
-		route = "agentrouter"
-		up = AgentRouterAPI
-	default:
-		up = goAPI
-		route = "go"
-	}
+	model := s.byAlias[a.Model]
 
 	detail = fmt.Sprintf("model=%s real=%s route=%s stream=%v effort=%s msgs=%d",
-		a.Model, real, route, a.Stream, oreq.ReasoningEffort, len(a.Messages))
+		a.Model, real, model.provider.BaseURL, a.Stream, oreq.ReasoningEffort, len(a.Messages))
 
-	resp, err := s.callUpstream(up, oreq)
+	resp, err := s.callUpstream(oreq, *model.provider)
+	fmt.Println(resp, err)
 	if err != nil {
 		status = 502
 		detail += " connect=" + err.Error()

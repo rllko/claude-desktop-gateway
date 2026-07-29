@@ -4,7 +4,7 @@ extra-api-keys:
 providers:
   # Standard Providers (Using Env Vars)
   opencode-go:
-    enabled: true
+    enabled: false
     api_type: opencode-go
     env_var: OPENCODE_API_KEY
     base_url: https://opencode.ai/zen/go/v1/chat/completions
@@ -12,6 +12,7 @@ providers:
       deepseek-v4-pro:
         enabled: true
         label: DeepSeek V4 Pro
+        real: deepseek-v4-pro
         alias: claude-deepsek
         max_in: 1000000
         max_out: 384000
@@ -20,6 +21,7 @@ providers:
         enabled: true
         label: DeepSeek V4 Flash
         alias: claude-deepsek-flash
+        real: deepseek-v4-flash
         max_in: 1000000
         max_out: 384000
         vision: false
@@ -27,6 +29,7 @@ providers:
         enabled: true
         label: Kimi K3
         alias: claude-kimm
+        real: kimi-k3
         max_in: 1048576
         max_out: 131072
         vision: true
@@ -34,6 +37,7 @@ providers:
         enabled: true
         label: Kimi K2.7 Code
         alias: claude-kimm-code
+        real: kimi-k2.7-code
         max_in: 262144
         max_out: 262144
         vision: true
@@ -41,6 +45,7 @@ providers:
         enabled: true
         label: Qwen3.7 Max
         alias: claude-qwwenn
+        real: qwen3.7-max
         max_in: 1000000
         max_out: 65536
         vision: false
@@ -48,6 +53,7 @@ providers:
         enabled: true
         label: Qwen3.7 Plus
         alias: claude-qwwenn-plus
+        real: qwen3.7-plus
         max_in: 1000000
         max_out: 65536
         vision: true
@@ -55,6 +61,7 @@ providers:
         enabled: true
         label: GLM-5
         alias: claude-gllm
+        real: glm-5
         max_in: 202752
         max_out: 32768
         vision: false
@@ -62,6 +69,7 @@ providers:
         enabled: true
         label: GLM-5.2
         alias: claude-gllm52
+        real: glm-5.2
         max_in: 1000000
         max_out: 131072
         vision: false
@@ -69,6 +77,7 @@ providers:
         enabled: true
         label: Grok 4.5
         alias: claude-grookk
+        real: grok-4.5
         max_in: 500000
         max_out: 500000
         vision: true
@@ -76,6 +85,7 @@ providers:
         enabled: true
         label: MiniMax M3
         alias: claude-minmax
+        real: minimax-m3
         max_in: 1000000
         max_out: 131072
         vision: true
@@ -83,6 +93,7 @@ providers:
         enabled: true
         label: MiMo v2.5 Pro
         alias: claude-mmimo
+        real: mimo-v2.5-pro
         max_in: 1048576
         max_out: 128000
         vision: false
@@ -97,6 +108,7 @@ providers:
         enabled: true
         label: GPT-4o
         alias: claude-gpt-4o
+        reak: gpt-4o
         max_in: 128000
         max_out: 16384
         vision: true
@@ -104,6 +116,7 @@ providers:
         enabled: true
         label: o1 (Reasoning)
         alias: claude-o1
+        real: o1
         max_in: 200000
         max_out: 100000
         vision: true
@@ -118,6 +131,7 @@ providers:
         enabled: true
         label: Gemini 2.0 Flash
         alias: claude-gemini-2-flash
+        real: gemini-2.0-flash
         max_in: 1048576
         max_out: 65536
         vision: true
@@ -132,10 +146,12 @@ providers:
         enabled: true
         label: DeepSeek V3
         alias: claude-deepsek-chat
+        real: deepseek-chat
         max_in: 64000
         max_out: 8192
         vision: false
 
+  # Custom Providers (No Env Vars Needed)
 
   zenapi:
     enabled: false
@@ -147,6 +163,7 @@ providers:
         enabled: true
         label: Big Pickle (free)
         alias: claude-bigpickle
+        real: big-pickle
         max_in: 131072
         max_out: 8192
         vision: false
@@ -154,6 +171,7 @@ providers:
         enabled: true
         label: DeepSeek V4 Flash (free)
         alias: claude-deepsek-flash-free
+        real: deepseek-v4-flash-free
         max_in: 1000000
         max_out: 384000
         vision: false
@@ -161,6 +179,7 @@ providers:
         enabled: true
         label: MiMo v2.5 (free)
         alias: claude-mmimo-free
+        real: mimo-v2.5-free
         max_in: 1048576
         max_out: 128000
         vision: false
@@ -168,6 +187,7 @@ providers:
         enabled: true
         label: North Mini Code (free)
         alias: claude-north-mini-code
+        real: north-mini-code-free
         max_in: 262144
         max_out: 32768
         vision: false
@@ -177,11 +197,14 @@ providers:
   agent-router:
     api_type: agent-router
     base_url: https://agentrouter.org/v1/chat/completions
+    enabled: true
+    user_agent: opencode/1.18.4
     models:
       kimi-k3:
         enabled: true
         label: Kimi K3 Agent
         alias: claude-kimm2
+        real: kimi-k3
         max_in: 1048576
         max_out: 131072
         vision: true
@@ -189,6 +212,7 @@ providers:
         enabled: true
         label: Claude Fable Agent
         alias: claude-fumble
+        real: claude-fable-5
         max_in: 1048576
         max_out: 131072
         vision: true
@@ -196,6 +220,23 @@ providers:
         enabled: true
         label: Gpt 5.6 Sol
         alias: claude-gipidi-56
+        real: gpt-5.6-sol
+        max_in: 1048576
+        max_out: 131072
+        vision: true
+      gpt-5.5:
+        enabled: true
+        label: Gpt 5.5
+        alias: claude-gipidi-55
+        real: gpt-5.5
+        max_in: 1048576
+        max_out: 131072
+        vision: true
+      opus-5:
+        enabled: true
+        label: Opus 5
+        alias: claude-gip-5
+        real: claude-opus-5
         max_in: 1048576
         max_out: 131072
         vision: true
