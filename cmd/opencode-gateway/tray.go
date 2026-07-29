@@ -85,8 +85,8 @@ func main() {
 	// name -> key ; example: openai -> KEY
 	processedKeys := gateway.LoadAPIKeys(p)
 
-	if pConfig.ExtraApiKeys != nil {
-		maps.Copy(processedKeys, pConfig.ExtraApiKeys)
+	if pConfig.ExtraAPIKeys != nil {
+		maps.Copy(processedKeys, pConfig.ExtraAPIKeys)
 	}
 
 	if len(processedKeys) == 0 {

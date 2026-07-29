@@ -1,15 +1,12 @@
 package gateway
 
-// Model maps a Desktop-facing alias to a real opencode model + picker label,
-// with the model's real context and max-output token limits (from opencode's
-// models.json) so Desktop's context meter and output caps are accurate.
-// Aliases are typo'd on purpose to slip past Desktop's third-party-brand filter.
+// PS: THE ALIAS FOR THE MODEL NEEDS TO BE A TYPO OR CLAUDE DESKTOP IIS NOT GONNA SHOW IT
 type YamlConfig struct {
-	ExtraApiKeys map[string]string         `yaml:"extra-api-keys,omitempty"`
+	ExtraAPIKeys map[string]string         `yaml:"extra-api-keys,omitempty"`
 	Providers    map[string]ProviderConfig `yaml:"providers"`
 }
 
-// the Provider level (zenapi, agent-router, etc.)
+// ProviderConfig (zenapi, agent-router, etc.)
 type ProviderConfig struct {
 	ClaudeSystemPrompt bool                   `yaml:"claude_system_prompt"`
 	Enabled            bool                   `yaml:"enabled"`
@@ -20,7 +17,7 @@ type ProviderConfig struct {
 	Models             map[string]ModelConfig `yaml:"models"`
 }
 
-// / the Model level (big-pickle, kimi-k3, etc.)
+// ModelConfig (big-pickle, kimi-k3, etc.)
 type ModelConfig struct {
 	Enabled bool   `yaml:"enabled"`
 	Label   string `yaml:"label"`
