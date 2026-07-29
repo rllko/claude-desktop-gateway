@@ -43,11 +43,7 @@ func filterProviders(providers []ProviderConfig, apiKeys map[string]string) []Pr
 
 	for _, provider := range providers {
 		if key, v := apiKeys[provider.APIType]; v {
-			// just in case
-			if provider.APIKey == "" {
-				provider.APIKey = key
-			}
-
+			provider.APIKey = key
 			out = append(out, provider)
 		}
 	}

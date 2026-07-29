@@ -3,6 +3,7 @@ package gateway
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -16,6 +17,7 @@ func (s *Server) callUpstream(body oaiReq, provider ProviderConfig) (*http.Respo
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(provider.APIKey)
 	req.Header.Set("authorization", "Bearer "+provider.APIKey)
 	req.Header.Set("content-type", "application/json")
 	// Cloudflare (error 1010) blocks the default Go/Python client UA.

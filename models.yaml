@@ -19,7 +19,7 @@ providers:
         max_out: 384000
         vision: false
       deepseek-v4-flash:
-        enabled: true
+        enabled: false
         label: DeepSeek V4 Flash
         alias: claude-deepsek-flash
         real: deepseek-v4-flash
@@ -35,7 +35,7 @@ providers:
         max_out: 131072
         vision: true
       kimi-k2.7-code:
-        enabled: true
+        enabled: false
         label: Kimi K2.7 Code
         alias: claude-kimm-code
         real: kimi-k2.7-code
@@ -51,7 +51,7 @@ providers:
         max_out: 65536
         vision: false
       qwen3.7-plus:
-        enabled: true
+        enabled: false
         label: Qwen3.7 Plus
         alias: claude-qwwenn-plus
         real: qwen3.7-plus
@@ -59,7 +59,7 @@ providers:
         max_out: 65536
         vision: true
       glm-5:
-        enabled: true
+        enabled: false
         label: GLM-5
         alias: claude-gllm
         real: glm-5
@@ -75,7 +75,7 @@ providers:
         max_out: 131072
         vision: false
       grok-4.5:
-        enabled: true
+        enabled: false
         label: Grok 4.5
         alias: claude-grookk
         real: grok-4.5
@@ -83,7 +83,7 @@ providers:
         max_out: 500000
         vision: true
       minimax-m3:
-        enabled: true
+        enabled: false
         label: MiniMax M3
         alias: claude-minmax
         real: minimax-m3
@@ -91,7 +91,7 @@ providers:
         max_out: 131072
         vision: true
       mimo-v2.5-pro:
-        enabled: true
+        enabled: false
         label: MiMo v2.5 Pro
         alias: claude-mmimo
         real: mimo-v2.5-pro
@@ -199,7 +199,7 @@ providers:
     user_agent: opencode/1.18.4
     models:
       claude-fable-5:
-        enabled: true
+        enabled: false
         label: Claude Fable Agent
         alias: claude-fumble
         real: claude-fable-5
@@ -215,7 +215,7 @@ providers:
         max_out: 131072
         vision: true
       gpt-5.5:
-        enabled: true
+        enabled: false
         label: Gpt 5.5
         alias: claude-gipidi-55
         real: gpt-5.5
