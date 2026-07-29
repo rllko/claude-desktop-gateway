@@ -3,7 +3,6 @@ package gateway
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -19,7 +18,6 @@ func (s *Server) callUpstream(body oaiReq, provider ProviderConfig) (*http.Respo
 	}
 	req.Header.Set("authorization", "Bearer "+provider.APIKey)
 	req.Header.Set("content-type", "application/json")
-	fmt.Printf("%s", body)
 	// Cloudflare (error 1010) blocks the default Go/Python client UA.
 	if provider.UserAgent == "" {
 		provider.UserAgent = "Mozilla/5.0 (opencode-gateway)"

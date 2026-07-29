@@ -131,7 +131,7 @@ func TestToOpenAI(t *testing.T) {
 				Content: json.RawMessage(`"hi"`),
 			},
 		},
-	})
+	}, false)
 	assert.Equal(t, "glm-5", real)
 	assert.Equal(t, "glm-5", out.Model)
 
@@ -145,20 +145,20 @@ func TestToOpenAI(t *testing.T) {
 				Content: json.RawMessage(`"hi"`),
 			},
 		},
-	})
+	}, true)
 	require.Len(t, out.Messages, 2)
 	assert.Equal(t, "system", out.Messages[0].Role)
 	assert.Equal(t, "be brief", out.Messages[0].Content)
 
 	// Test: max_tokens defaults to 4096 when absent
-	_, out = srv.toOpenAI(anthReq{Model: "claude-gllm"})
+	_, out = srv.toOpenAI(anthReq{Model: "claude-gllm"}, false)
 	assert.Equal(t, 4096, out.MaxTokens)
 
 	// Test: streaming sets stream_options.include_usage
 	_, out = srv.toOpenAI(anthReq{
 		Model:  "claude-gllm",
 		Stream: true,
-	})
+	}, false)
 	require.NotNil(t, out.StreamOptions)
 	assert.True(t, out.StreamOptions.IncludeUsage)
 
@@ -168,7 +168,7 @@ func TestToOpenAI(t *testing.T) {
 		OutputConfig: &anthOutputConfig{
 			Effort: "low",
 		},
-	})
+	}, false)
 	assert.Equal(t, "low", out.ReasoningEffort)
 
 	// Test: Anthropic-only levels clamp to high (zen knows low/medium/high only)
@@ -177,7 +177,7 @@ func TestToOpenAI(t *testing.T) {
 		OutputConfig: &anthOutputConfig{
 			Effort: "max",
 		},
-	})
+	}, false)
 	assert.Equal(t, "high", out.ReasoningEffort)
 
 	// Test: no output_config -> no reasoning_effort sent upstream
@@ -185,6 +185,7 @@ func TestToOpenAI(t *testing.T) {
 		anthReq{
 			Model: "claude-gllm",
 		},
+		false,
 	)
 	assert.Empty(t, out.ReasoningEffort)
 
@@ -194,7 +195,7 @@ func TestToOpenAI(t *testing.T) {
 		OutputConfig: &anthOutputConfig{
 			Effort: "ludicrous",
 		},
-	})
+	}, false)
 	assert.Empty(t, out.ReasoningEffort)
 }
 

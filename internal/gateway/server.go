@@ -235,15 +235,27 @@ func (s *Server) handleMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	real, oreq := s.toOpenAI(a)
-
 	model := s.byAlias[a.Model]
 
+	real, oreq := s.toOpenAI(a, model.provider.ClaudeSystemPrompt)
+
+	/*
+		out := []string{}
+
+		for _, msg := range oreq.Messages {
+			text, ok := msg.Content.(string)
+			if ok {
+				out = append(out, text)
+			}
+		}
+		detail = fmt.Sprintf("system=%q", textOf(a.System))
+		writeJSON(w, http.StatusOK, errObj("message", strings.Join(out, "\n")))
+
+	*/
 	detail = fmt.Sprintf("model=%s real=%s route=%s stream=%v effort=%s msgs=%d",
 		a.Model, real, model.provider.BaseURL, a.Stream, oreq.ReasoningEffort, len(a.Messages))
 
 	resp, err := s.callUpstream(oreq, *model.provider)
-	fmt.Println(resp, err)
 	if err != nil {
 		status = 502
 		detail += " connect=" + err.Error()

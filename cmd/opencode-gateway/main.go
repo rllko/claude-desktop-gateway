@@ -6,7 +6,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"log/slog"
 	"maps"
@@ -48,7 +47,6 @@ func main() {
 	if pConfig.ExtraApiKeys != nil {
 		maps.Copy(processedKeys, pConfig.ExtraApiKeys)
 	}
-	fmt.Println(providers[0].Models["deepseek-v4-flash"].Real)
 	if len(processedKeys) == 0 {
 		slog.Warn("no API key found — requests will 401 until one is set")
 	}

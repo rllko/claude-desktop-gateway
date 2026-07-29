@@ -4,7 +4,8 @@ extra-api-keys:
 providers:
   # Standard Providers (Using Env Vars)
   opencode-go:
-    enabled: false
+    enabled: true
+    claude_system_prompt: true
     api_type: opencode-go
     env_var: OPENCODE_API_KEY
     base_url: https://opencode.ai/zen/go/v1/chat/completions
@@ -100,29 +101,23 @@ providers:
 
   openai:
     enabled: false
+    claude_system_prompt: false
     api_type: openai
     env_var: OPENAI_API_KEY
     base_url: https://api.openai.com/v1/chat/completions
     models:
       gpt-4o:
         enabled: true
-        label: GPT-4o
-        alias: claude-gpt-4o
-        reak: gpt-4o
+        label: GPT-5.6
+        alias: claude-gpt-56
+        reak: gpt-5.6
         max_in: 128000
         max_out: 16384
-        vision: true
-      o1:
-        enabled: true
-        label: o1 (Reasoning)
-        alias: claude-o1
-        real: o1
-        max_in: 200000
-        max_out: 100000
         vision: true
 
   gemini:
     enabled: false
+    claude_system_prompt: false
     api_type: gemini
     env_var: GEMINI_API_KEY
     base_url: https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
@@ -138,6 +133,7 @@ providers:
 
   deepseek:
     enabled: false
+    claude_system_prompt: false
     api_type: deepseek
     env_var: DEEPSEEK_API_KEY
     base_url: https://api.deepseek.com/chat/completions
@@ -155,6 +151,7 @@ providers:
 
   zenapi:
     enabled: false
+    claude_system_prompt: false
     api_type: zenapi
     env_var: OPENCODE_API_KEY
     base_url: https://opencode.ai/zen/go/v1/chat/completions
@@ -196,18 +193,11 @@ providers:
 
   agent-router:
     api_type: agent-router
+    claude_system_prompt: false
     base_url: https://agentrouter.org/v1/chat/completions
     enabled: true
     user_agent: opencode/1.18.4
     models:
-      kimi-k3:
-        enabled: true
-        label: Kimi K3 Agent
-        alias: claude-kimm2
-        real: kimi-k3
-        max_in: 1048576
-        max_out: 131072
-        vision: true
       claude-fable-5:
         enabled: true
         label: Claude Fable Agent

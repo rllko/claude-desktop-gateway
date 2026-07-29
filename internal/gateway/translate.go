@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 )
 
@@ -259,20 +258,22 @@ func convMsg(m anthMsg) []oaiMsg {
 	return res
 }
 
-func (s *Server) toOpenAI(a anthReq) (string, oaiReq) {
+func (s *Server) toOpenAI(a anthReq, inclSysPrompt bool) (string, oaiReq) {
 	real := s.byAlias[a.Model].model.Real
-	fmt.Println(real)
 	if real == "" {
 		real = s.cfg.DefaultModel
 	}
 
 	var msgs []oaiMsg
-	if sys := textOf(a.System); sys != "" {
-		msgs = append(msgs,
-			oaiMsg{
-				Role:    "system",
-				Content: sys,
-			})
+
+	if inclSysPrompt {
+		if sys := textOf(a.System); sys != "" {
+			msgs = append(msgs,
+				oaiMsg{
+					Role:    "system",
+					Content: sys,
+				})
+		}
 	}
 
 	for _, m := range a.Messages {
