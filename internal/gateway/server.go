@@ -231,9 +231,16 @@ func (s *Server) handleMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	model := s.byAlias[a.Model]
+	var model ModelInfo
+	var ok bool
 
-	real, oreq := s.toOpenAI(a, model.provider.ClaudeSystemPrompt)
+	if model, ok = s.byAlias[a.Model]; !ok {
+		fmt.Println("model not found " + a.Model)
+		http.Error(w, "model not found", http.StatusBadRequest)
+		return
+	}
+
+	real, oreq := s.toOpenAI(a, model.provider.IncludeSystemPrompt)
 
 	/*
 		out := []string{}

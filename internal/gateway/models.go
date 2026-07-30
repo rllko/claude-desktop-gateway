@@ -8,13 +8,13 @@ type YamlConfig struct {
 
 // ProviderConfig (zenapi, agent-router, etc.)
 type ProviderConfig struct {
-	ClaudeSystemPrompt bool                   `yaml:"claude_system_prompt"`
-	Enabled            bool                   `yaml:"enabled"`
-	APIType            string                 `yaml:"api_type,omitempty"`
-	APIKey             string                 `yaml:"env_var,omitempty"`
-	BaseURL            string                 `yaml:"base_url"`
-	UserAgent          string                 `yaml:"user_agent"`
-	Models             map[string]ModelConfig `yaml:"models"`
+	IncludeSystemPrompt bool                   `yaml:"claude_system_prompt"`
+	Enabled             bool                   `yaml:"enabled"`
+	APIType             string                 `yaml:"api_type,omitempty"`
+	APIKey              string                 `yaml:"env_var,omitempty"`
+	BaseURL             string                 `yaml:"base_url"`
+	UserAgent           string                 `yaml:"user_agent"`
+	Models              map[string]ModelConfig `yaml:"models"`
 }
 
 // ModelConfig (big-pickle, kimi-k3, etc.)
