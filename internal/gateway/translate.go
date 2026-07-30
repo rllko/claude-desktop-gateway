@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 )
 
@@ -258,19 +259,52 @@ func convMsg(m anthMsg) []oaiMsg {
 	return res
 }
 
-func (s *Server) toOpenAI(a anthReq) (string, oaiReq) {
-	real := s.byAlias[a.Model].Real
+func (s *Server) toOpenAI(a anthReq, inclSysPrompt bool) (string, oaiReq) {
+	real := s.byAlias[a.Model].model.Real
 	if real == "" {
 		real = s.cfg.DefaultModel
 	}
 
 	var msgs []oaiMsg
-	if sys := textOf(a.System); sys != "" {
-		msgs = append(msgs,
-			oaiMsg{
-				Role:    "system",
-				Content: sys,
-			})
+
+	// i will keep this to save some tokens idk
+	if inclSysPrompt {
+		if sys := textOf(a.System); sys != "" {
+			// this is the keyword blocked by some providers, chat...
+			_, after, ok := strings.Cut(sys, "cc_entrypoint=")
+			if ok {
+				sys = after
+			}
+
+			list := make([]string, 0)
+			for _, m := range s.models {
+				// Fable 5: 'claude-fable-5'
+				list = append(list, fmt.Sprintf("%s: '%s' (%s)", m.Label, m.Alias, m.Real))
+			}
+			begin := "The most recent Claude models"
+			end := " default to the latest and most capable Claude models"
+
+			head := strings.Index(sys, begin)
+			tail := strings.Index(sys, end)
+
+			if head != -1 && tail != -1 && head < tail {
+				final := fmt.Sprintf(
+					`This tool allows you to pick multiple families of models other than Anthropic. Model IDs — %s. When building AI applications, default to the currently selected model.
+- DO NOT run any anthropic model Fable, Opus, Sonnet, Haiku ... unless the model is selected.`+"\n",
+					strings.Join(list, ","),
+				)
+
+				sys = sys[:head] + final + sys[tail+len(end)+1:]
+			}
+
+			//os.WriteFile("system prompt.txt", []byte(sys), 0o644)
+
+			msgs = append(msgs,
+				oaiMsg{
+					Role:    "system",
+					Content: sys,
+				})
+		}
 	}
 
 	for _, m := range a.Messages {
@@ -348,7 +382,6 @@ func buildMessageResponse(o oaiResp, real string) map[string]any {
 		if json.Unmarshal([]byte(tc.Function.Arguments), &input) != nil || input == nil {
 			input = map[string]any{}
 		}
-
 		content = append(content, map[string]any{
 			"type": "tool_use", "id": tc.ID, "name": tc.Function.Name, "input": input,
 		})

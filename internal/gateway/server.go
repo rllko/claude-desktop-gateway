@@ -24,29 +24,56 @@ import (
 )
 
 type Server struct {
-	cfg     Config
-	apiKey  string
-	client  *http.Client
-	models  []Model
-	byAlias map[string]Model // Desktop alias -> model (real name + upstream API)
-	log     *slog.Logger     // nil unless GATEWAY_LOG is set
-	logC    io.Closer        // underlying log file; nil unless GATEWAY_LOG is set
+	cfg       Config
+	client    *http.Client
+	models    []ModelConfig
+	providers []ProviderConfig
+	byAlias   map[string]ModelInfo // Desktop alias -> model (real name + upstream API)
+	log       *slog.Logger         // nil unless GATEWAY_LOG is set
+	logC      io.Closer            // underlying log file; nil unless GATEWAY_LOG is set
 }
 
-func New(cfg Config, apiKey string) *Server {
-	byAlias := make(map[string]Model, len(models))
-	for _, m := range models {
-		byAlias[m.Alias] = m
+type ModelInfo struct {
+	model    *ModelConfig
+	provider *ProviderConfig
+}
+
+func filterProviders(providers []ProviderConfig, apiKeys map[string]string) []ProviderConfig {
+	out := make([]ProviderConfig, 0)
+
+	for _, provider := range providers {
+		if key, v := apiKeys[provider.APIType]; v {
+			provider.APIKey = key
+			out = append(out, provider)
+		}
 	}
+
+	return out
+}
+
+func New(cfg Config, apiKeys map[string]string, providers []ProviderConfig) *Server {
+	byAlias := make(map[string]ModelInfo)
+	providers = filterProviders(providers, apiKeys)
+	models := make([]ModelConfig, 0)
+
+	for _, p := range providers {
+		for _, m := range p.Models {
+			if m.Enabled {
+				byAlias[m.Alias] = ModelInfo{model: &m, provider: &p}
+				models = append(models, m)
+			}
+		}
+	}
+
 	lg, lc := openLogger(cfg.LogSpec)
 	return &Server{
-		cfg:     cfg,
-		apiKey:  apiKey,
-		client:  &http.Client{Timeout: cfg.HTTPTimeout},
-		models:  models,
-		byAlias: byAlias,
-		log:     lg,
-		logC:    lc,
+		cfg:       cfg,
+		client:    &http.Client{Timeout: cfg.HTTPTimeout},
+		providers: providers,
+		byAlias:   byAlias,
+		models:    models,
+		log:       lg,
+		logC:      lc,
 	}
 }
 
@@ -65,7 +92,7 @@ func (s *Server) Handler() http.Handler {
 	return mux
 }
 
-func (s *Server) HasKey() bool { return s.apiKey != "" }
+func (s *Server) HasKey(provider ProviderConfig) bool { return len(s.providers) > 0 }
 
 func (s *Server) ModelCount() int { return len(s.models) }
 
@@ -148,7 +175,7 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 				"type":             "model",
 				"id":               m.Alias,
 				"display_name":     m.Label,
-				"created_at":       createdAt,
+				"created_at":       time.Now().UTC(),
 				"max_input_tokens": m.MaxIn,
 				"max_tokens":       m.MaxOut,
 				"capabilities": map[string]any{
@@ -193,44 +220,45 @@ func (s *Server) handleMessages(w http.ResponseWriter, r *http.Request) {
 	var detail string
 	defer func() { s.logf(r, status, start, "%s", detail) }()
 
-	if s.apiKey == "" {
-		status = 401
-		writeJSON(w,
-			status,
-			errObj("no_api_key",
-				"no API key: set OPENCODE_API_KEY or put opencode-key.txt next to the executable"))
-		return
-	}
-
 	var a anthReq
 	if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
 		status = 400
 		detail = "decode=" + err.Error()
 		writeJSON(
 			w,
-			status,
-			errObj("invalid_request", err.Error()),
+			status, errObj("invalid_request", err.Error()),
 		)
 		return
 	}
 
-	real, oreq := s.toOpenAI(a)
+	var model ModelInfo
+	var ok bool
 
-	var route string
-	up := s.byAlias[a.Model].API
-
-	switch up {
-	case zenAPI:
-		route = "zen"
-	default:
-		up = goAPI
-		route = "go"
+	if model, ok = s.byAlias[a.Model]; !ok {
+		fmt.Println("model not found " + a.Model)
+		http.Error(w, "model not found", http.StatusBadRequest)
+		return
 	}
 
-	detail = fmt.Sprintf("model=%s real=%s route=%s stream=%v effort=%s msgs=%d",
-		a.Model, real, route, a.Stream, oreq.ReasoningEffort, len(a.Messages))
+	real, oreq := s.toOpenAI(a, model.provider.IncludeSystemPrompt)
 
-	resp, err := s.callUpstream(up, oreq)
+	/*
+		out := []string{}
+
+		for _, msg := range oreq.Messages {
+			text, ok := msg.Content.(string)
+			if ok {
+				out = append(out, text)
+			}
+		}
+		detail = fmt.Sprintf("system=%q", textOf(a.System))
+		writeJSON(w, http.StatusOK, errObj("message", strings.Join(out, "\n")))
+
+	*/
+	detail = fmt.Sprintf("model=%s real=%s route=%s stream=%v effort=%s msgs=%d",
+		a.Model, real, model.provider.BaseURL, a.Stream, oreq.ReasoningEffort, len(a.Messages))
+
+	resp, err := s.callUpstream(oreq, *model.provider)
 	if err != nil {
 		status = 502
 		detail += " connect=" + err.Error()

@@ -1,0 +1,232 @@
+# api_type -> KEY
+extra-api-keys:
+  agent-router: sk-omdCuawZqUCQ1BJ2v5zCV6SWthF7oLuBeV6vCEsP3xkSSW72
+providers:
+  # Standard Providers (Using Env Vars)
+  opencode-go:
+    enabled: true
+    claude_system_prompt: true
+    api_type: opencode-go
+    env_var: OPENCODE_API_KEY
+    base_url: https://opencode.ai/zen/go/v1/chat/completions
+    models:
+      deepseek-v4-pro:
+        enabled: true
+        label: DeepSeek V4 Pro
+        real: deepseek-v4-pro
+        alias: claude-deepsek
+        max_in: 1000000
+        max_out: 384000
+        vision: false
+      deepseek-v4-flash:
+        enabled: false
+        label: DeepSeek V4 Flash
+        alias: claude-deepsek-flash
+        real: deepseek-v4-flash
+        max_in: 1000000
+        max_out: 384000
+        vision: false
+      kimi-k3:
+        enabled: true
+        label: Kimi K3
+        alias: claude-kimm
+        real: kimi-k3
+        max_in: 1048576
+        max_out: 131072
+        vision: true
+      kimi-k2.7-code:
+        enabled: false
+        label: Kimi K2.7 Code
+        alias: claude-kimm-code
+        real: kimi-k2.7-code
+        max_in: 262144
+        max_out: 262144
+        vision: true
+      qwen3.7-max:
+        enabled: true
+        label: Qwen3.7 Max
+        alias: claude-qwwenn
+        real: qwen3.7-max
+        max_in: 1000000
+        max_out: 65536
+        vision: false
+      qwen3.7-plus:
+        enabled: false
+        label: Qwen3.7 Plus
+        alias: claude-qwwenn-plus
+        real: qwen3.7-plus
+        max_in: 1000000
+        max_out: 65536
+        vision: true
+      glm-5:
+        enabled: false
+        label: GLM-5
+        alias: claude-gllm
+        real: glm-5
+        max_in: 202752
+        max_out: 32768
+        vision: false
+      glm-5.2:
+        enabled: true
+        label: GLM-5.2
+        alias: claude-gllm52
+        real: glm-5.2
+        max_in: 1000000
+        max_out: 131072
+        vision: false
+      grok-4.5:
+        enabled: false
+        label: Grok 4.5
+        alias: claude-grookk
+        real: grok-4.5
+        max_in: 500000
+        max_out: 500000
+        vision: true
+      minimax-m3:
+        enabled: false
+        label: MiniMax M3
+        alias: claude-minmax
+        real: minimax-m3
+        max_in: 1000000
+        max_out: 131072
+        vision: true
+      mimo-v2.5-pro:
+        enabled: false
+        label: MiMo v2.5 Pro
+        alias: claude-mmimo
+        real: mimo-v2.5-pro
+        max_in: 1048576
+        max_out: 128000
+        vision: false
+
+  openai:
+    enabled: false
+    claude_system_prompt: false
+    api_type: openai
+    env_var: OPENAI_API_KEY
+    base_url: https://api.openai.com/v1/chat/completions
+    models:
+      gpt-4o:
+        enabled: true
+        label: GPT-5.6
+        alias: claude-gpt-56
+        reak: gpt-5.6
+        max_in: 128000
+        max_out: 16384
+        vision: true
+
+  gemini:
+    enabled: false
+    claude_system_prompt: false
+    api_type: gemini
+    env_var: GEMINI_API_KEY
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+    models:
+      gemini-2.0-flash:
+        enabled: true
+        label: Gemini 2.0 Flash
+        alias: claude-gemini-2-flash
+        real: gemini-2.0-flash
+        max_in: 1048576
+        max_out: 65536
+        vision: true
+
+  deepseek:
+    enabled: false
+    claude_system_prompt: false
+    api_type: deepseek
+    env_var: DEEPSEEK_API_KEY
+    base_url: https://api.deepseek.com/chat/completions
+    models:
+      deepseek-chat:
+        enabled: true
+        label: DeepSeek V3
+        alias: claude-deepsek-chat
+        real: deepseek-chat
+        max_in: 64000
+        max_out: 8192
+        vision: false
+
+  # Custom Providers (No Env Vars Needed)
+
+  zenapi:
+    enabled: false
+    claude_system_prompt: false
+    api_type: zenapi
+    env_var: OPENCODE_API_KEY
+    base_url: https://opencode.ai/zen/go/v1/chat/completions
+    models:
+      big-pickle:
+        enabled: true
+        label: Big Pickle (free)
+        alias: claude-bigpickle
+        real: big-pickle
+        max_in: 131072
+        max_out: 8192
+        vision: false
+      deepseek-v4-flash-free:
+        enabled: true
+        label: DeepSeek V4 Flash (free)
+        alias: claude-deepsek-flash-free
+        real: deepseek-v4-flash-free
+        max_in: 1000000
+        max_out: 384000
+        vision: false
+      mimo-v2.5-free:
+        enabled: true
+        label: MiMo v2.5 (free)
+        alias: claude-mmimo-free
+        real: mimo-v2.5-free
+        max_in: 1048576
+        max_out: 128000
+        vision: false
+      north-mini-code-free:
+        enabled: true
+        label: North Mini Code (free)
+        alias: claude-north-mini-code
+        real: north-mini-code-free
+        max_in: 262144
+        max_out: 32768
+        vision: false
+
+  # Custom Providers (No Env Vars Needed)
+
+  agent-router:
+    api_type: agent-router
+    claude_system_prompt: false
+    base_url: https://agentrouter.org/v1/chat/completions
+    enabled: true
+    user_agent: opencode/1.18.4
+    models:
+      claude-fable-5:
+        enabled: false
+        label: Claude Fable Agent
+        alias: claude-fumble
+        real: claude-fable-5
+        max_in: 1048576
+        max_out: 131072
+        vision: true
+      gpt-5.6-sol:
+        enabled: true
+        label: Gpt 5.6 Sol
+        alias: claude-gipidi-56
+        real: gpt-5.6-sol
+        max_in: 1048576
+        max_out: 131072
+        vision: true
+      gpt-5.5:
+        enabled: false
+        label: Gpt 5.5
+        alias: claude-gipidi-55
+        real: gpt-5.5
+        max_in: 1048576
+        max_out: 131072
+        vision: true
+      opus-5:
+        enabled: true
+        label: Opus 5
+        alias: claude-gip-5
+        real: claude-opus-5
+        max_in: 1048576
+        max_out: 131072
+        vision: true
