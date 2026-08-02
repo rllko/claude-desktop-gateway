@@ -1,4 +1,4 @@
-# opencode-gateway
+# claude-code-gateway
 
 opencode-gateway connects Claude Desktop to other model providers. Claude
 Desktop speaks the Anthropic API. The providers speak the OpenAI API. The
